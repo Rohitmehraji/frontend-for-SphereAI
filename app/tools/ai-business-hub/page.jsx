@@ -3,27 +3,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Search, TrendingUp, Zap } from 'lucide-react';
-
-// Mock Data
-const marketResearchData = {
-  marketSize: '$1.2B',
-  growthRate: '15% YoY',
-  competitors: [
-    { name: 'Competitor A', share: 40 },
-    { name: 'Competitor B', share: 25 },
-    { name: 'Competitor C', share: 15 },
-    { name: 'Others', share: 20 },
-  ],
-};
-
-const financialForecastData = [
-  { name: 'Q1', revenue: 4000, profit: 2400 },
-  { name: 'Q2', revenue: 3000, profit: 1398 },
-  { name: 'Q3', revenue: 2000, profit: 9800 },
-  { name: 'Q4', revenue: 2780, profit: 3908 },
-  { name: 'Q1+1', revenue: 1890, profit: 4800 },
-];
+import { FileText, Search, TrendingUp, Zap, Loader, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { generateBusinessPlan, performMarketResearch, generateFinancialForecast } from '../../lib/aiToolsService';
 
 const tabs = [
   { name: 'Business Plan', icon: FileText },
@@ -33,64 +15,79 @@ const tabs = [
 
 const AIBusinessHubPage = () => {
   const [activeTab, setActiveTab] = useState(tabs[0].name);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // State for each tool
+  const [businessPlanInput, setBusinessPlanInput] = useState('');
+  const [businessPlanOutput, setBusinessPlanOutput] = useState(null);
+  const [marketResearchInput, setMarketResearchInput] = useState('');
+  const [marketResearchOutput, setMarketResearchOutput] = useState(null);
+  const [financialForecastInput, setFinancialForecastInput] = useState('');
+  const [financialForecastOutput, setFinancialForecastOutput] = useState(null);
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setError(null);
+    const toastId = toast.loading(`Generating ${activeTab}...`);
+
+    try {
+      let result;
+      if (activeTab === 'Business Plan') {
+        result = await generateBusinessPlan({ description: businessPlanInput });
+        setBusinessPlanOutput(result);
+      } else if (activeTab === 'Market Research') {
+        result = await performMarketResearch({ topic: marketResearchInput });
+        setMarketResearchOutput(result);
+      } else if (activeTab === 'Financial Forecast') {
+        result = await generateFinancialForecast({ data: financialForecastInput });
+        setFinancialForecastOutput(result);
+      }
+      toast.success(`${activeTab} generated successfully!`);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || `Failed to generate ${activeTab}.`;
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+      toast.dismiss(toastId);
+    }
+  };
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'Business Plan':
-        return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h2 className="text-2xl font-semibold mb-4">AI Business Plan Generator</h2>
+    const content = {
+        'Business Plan': (
+            <div>
+                <textarea value={businessPlanInput} onChange={(e) => setBusinessPlanInput(e.target.value)} className="w-full p-2 bg-gray-600 rounded-md" rows="4" placeholder="Describe your business idea..."></textarea>
+                {businessPlanOutput && <pre className="mt-4 p-4 bg-gray-600 rounded-md whitespace-pre-wrap">{JSON.stringify(businessPlanOutput, null, 2)}</pre>}
+            </div>
+        ),
+        'Market Research': (
+            <div>
+                <input type='text' value={marketResearchInput} onChange={(e) => setMarketResearchInput(e.target.value)} className="w-full p-2 bg-gray-600 rounded-md" placeholder="Enter a market or industry..."/>
+                {marketResearchOutput && <pre className="mt-4 p-4 bg-gray-600 rounded-md whitespace-pre-wrap">{JSON.stringify(marketResearchOutput, null, 2)}</pre>}
+            </div>
+        ),
+        'Financial Forecast': (
+            <div>
+                <textarea value={financialForecastInput} onChange={(e) => setFinancialForecastInput(e.target.value)} className="w-full p-2 bg-gray-600 rounded-md" rows="4" placeholder="Enter your financial data..."></textarea>
+                {financialForecastOutput && <pre className="mt-4 p-4 bg-gray-600 rounded-md whitespace-pre-wrap">{JSON.stringify(financialForecastOutput, null, 2)}</pre>}
+            </div>
+        )
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <h2 className="text-2xl font-semibold mb-4">{`AI ${activeTab} Generator`}</h2>
             <div className="bg-gray-700 p-6 rounded-lg">
-                <textarea className="w-full p-2 bg-gray-600 rounded-md" rows="4" placeholder="Describe your business idea..."></textarea>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-4 px-6 py-2 bg-purple-600 rounded-md">
-                    <Zap className="inline-block mr-2" /> Generate Plan
+                {content[activeTab]}
+                <motion.button onClick={handleGenerate} disabled={loading} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-4 px-6 py-2 bg-purple-600 rounded-md flex items-center disabled:opacity-50">
+                    {loading ? <><Loader className="animate-spin mr-2" /> Generating...</> : <><Zap className="inline-block mr-2" /> Generate</>}
                 </motion.button>
+                {error && <div className='text-red-400 mt-4 flex items-center'><AlertCircle className='mr-2'/>{error}</div>}
             </div>
-          </motion.div>
-        );
-      case 'Market Research':
-        return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h2 className="text-2xl font-semibold mb-4">Market Research Insights</h2>
-            <div className="grid grid-cols-2 gap-6">
-                <div className="bg-gray-700 p-4 rounded-lg">
-                    <p>Market Size: {marketResearchData.marketSize}</p>
-                    <p>Growth Rate: {marketResearchData.growthRate}</p>
-                </div>
-                <div className="bg-gray-700 p-4 rounded-lg h-64">
-                    <ResponsiveContainer>
-                        <BarChart data={marketResearchData.competitors}>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="share" fill="#8884d8" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-          </motion.div>
-        );
-      case 'Financial Forecast':
-        return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h2 className="text-2xl font-semibold mb-4">Financial Forecast</h2>
-            <div className="bg-gray-700 p-6 rounded-lg h-80">
-                <ResponsiveContainer>
-                    <LineChart data={financialForecastData}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="revenue" stroke="#8884d8" />
-                        <Line type="monotone" dataKey="profit" stroke="#82ca9d" />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-          </motion.div>
-        );
-      default:
-        return null;
-    }
+        </motion.div>
+    );
   };
 
   return (

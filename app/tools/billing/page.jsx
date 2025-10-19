@@ -1,151 +1,202 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, DollarSign, CheckCircle, Shield } from 'lucide-react';
+import { CreditCard, DollarSign, CheckCircle, Shield, AlertCircle, XCircle, Loader } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { loadStripe } from '@stripe/stripe-js';
 import PaymentModal from '../../../components/PaymentModal';
+import { getSubscriptionDetails, getTransactionHistory, cancelSubscription } from '../../../lib/billingService';
+import { createStripeCheckoutSession } from '../../../lib/paymentService';
 
-// Mock Data
-const currentPlan = {
-  name: 'Pro Plan',
-  price: '$49/mo',
-  features: [
-    'Unlimited AI Generations',
-    'Advanced Business Intelligence',
-    '24/7 Priority Support',
-    'Team Collaboration (3 seats)',
-  ],
-};
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-const paymentMethod = {
-  brand: 'Visa',
-  last4: '4242',
-  expires: '12/26',
-};
-
-const transactionHistory = [
-  { id: 1, date: '2023-10-15', amount: '$49.00', description: 'Monthly Subscription' },
-  { id: 2, date: '2023-09-15', amount: '$49.00', description: 'Monthly Subscription' },
-  { id: 3, date: '2023-08-15', amount: '$49.00', description: 'Monthly Subscription' },
-];
+const SkeletonLoader = ({ className }) => <div className={`bg-gray-700 animate-pulse rounded ${className}`}></div>;
 
 const BillingPage = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState({ isSuccess: true, message: '' });
+  const [subscription, setSubscription] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [error, setError] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
-  const handleUpgrade = () => {
-    setModalContent({
-      isSuccess: true,
-      message: 'Your plan has been successfully upgraded! You now have access to all Pro features.',
-    });
-    setIsModalOpen(true);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [subDetails, transHistory] = await Promise.all([
+          getSubscriptionDetails(),
+          getTransactionHistory(),
+        ]);
+        setSubscription(subDetails);
+        setHistory(transHistory);
+      } catch (err) {
+        setError('Failed to load billing information.');
+        console.error(err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    const toastId = toast.loading('Redirecting to checkout...');
+    try {
+      const { sessionId } = await createStripeCheckoutSession({ plan: 'Pro', price: 9900 }); // Price in cents
+      const stripe = await stripePromise;
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (err) {
+      toast.error('Failed to initiate checkout. Please try again.');
+    } finally {
+        toast.dismiss(toastId);
+        setIsUpgrading(false);
+    }
   };
 
-  const closeModal = () => setIsModalOpen(false);
+  const handleCancelSubscription = async () => {
+    if (window.confirm('Are you sure you want to cancel your subscription? This action cannot be undone.')) {
+        setIsCancelling(true);
+        const toastId = toast.loading('Cancelling your subscription...');
+        try {
+            const response = await cancelSubscription();
+            toast.dismiss(toastId);
+            toast.success(response.message);
+            // Refetch data to show updated status
+            const subDetails = await getSubscriptionDetails();
+            setSubscription({ ...subDetails, plan: 'Free Plan', price: 0 }); // Simulate cancelled state
+        } catch (err) {
+            toast.dismiss(toastId);
+            toast.error('Failed to cancel subscription. Please contact support.');
+        } finally {
+            setIsCancelling(false);
+        }
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-400">
+        <AlertCircle className="w-12 h-12 mr-4" />
+        <div>
+          <h2 className="text-2xl font-bold">Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <PaymentModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        isSuccess={modalContent.isSuccess}
-        message={modalContent.message}
-      />
       <div className="p-8 bg-gray-900 text-white min-h-screen">
         <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"
-      >
-        Billing & Subscriptions
-      </motion.h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Current Plan Section */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"
         >
-          <h2 className="text-2xl font-semibold mb-4 flex items-center"><CheckCircle className="mr-2 text-green-400" /> Current Plan</h2>
-          <div className="p-6 bg-gray-700 rounded-lg">
-            <h3 className="text-3xl font-bold text-purple-400">{currentPlan.name}</h3>
-            <p className="text-5xl font-extrabold my-4">{currentPlan.price}</p>
-            <ul className="space-y-2 text-gray-300">
-              {currentPlan.features.map((feature, index) => (
-                <li key={index} className="flex items-center">
-                  <CheckCircle className="mr-2 text-green-500" size={16} /> {feature}
-                </li>
-              ))}
-            </ul>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleUpgrade}
-              className="mt-6 w-full py-3 font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-md hover:from-purple-600 hover:to-pink-600"
-            >
-              Upgrade Plan
-            </motion.button>
-          </div>
-        </motion.div>
+            Billing & Subscriptions
+        </motion.h1>
 
-        {/* Payment Method Section */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-gray-800 p-6 rounded-lg shadow-lg"
-        >
-          <h2 className="text-2xl font-semibold mb-4 flex items-center"><CreditCard className="mr-2 text-blue-400" /> Payment Method</h2>
-          <div className="p-6 bg-gray-700 rounded-lg flex items-center">
-            <img src="https://img.icons8.com/color/48/000000/visa.png" alt="Visa" className="mr-4"/>
-            <div>
-              <p className="font-bold text-lg">{paymentMethod.brand} ending in {paymentMethod.last4}</p>
-              <p className="text-gray-400">Expires {paymentMethod.expires}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Current Plan Section */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg"
+          >
+            <h2 className="text-2xl font-semibold mb-4 flex items-center"><CheckCircle className="mr-2 text-green-400" /> Current Plan</h2>
+            <div className="p-6 bg-gray-700 rounded-lg">
+                {subscription ? (
+                    <>
+                        <h3 className="text-3xl font-bold text-purple-400">{subscription.plan}</h3>
+                        <p className="text-5xl font-extrabold my-4">${subscription.price}/mo</p>
+                        <p className="text-gray-400 text-sm">Next billing date: {subscription.nextBillingDate}</p>
+                        <motion.button
+                            onClick={handleUpgrade}
+                            disabled={isUpgrading}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="mt-6 w-full py-3 font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-md hover:from-purple-600 hover:to-pink-600 flex items-center justify-center disabled:opacity-50"
+                            >
+                            {isUpgrading ? <><Loader className="animate-spin mr-2"/> Processing...</> : 'Upgrade Plan'}
+                        </motion.button>
+                        <motion.button
+                            onClick={handleCancelSubscription}
+                            disabled={isCancelling}
+                            className="mt-4 w-full py-2 font-semibold text-red-400 bg-transparent border border-red-400 rounded-md hover:bg-red-900/50"
+                            >
+                            {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
+                        </motion.button>
+                    </>
+                ) : (
+                    <>
+                        <SkeletonLoader className="h-10 w-1/3 mb-4" />
+                        <SkeletonLoader className="h-16 w-1/2 my-4" />
+                        <SkeletonLoader className="h-6 w-1/4" />
+                        <SkeletonLoader className="h-12 w-full mt-6" />
+                    </>
+                )}
             </div>
-          </div>
-          <button className="mt-4 w-full text-sm text-purple-400 hover:text-purple-300">
-            Update Payment Method
-          </button>
-          <div className="mt-6 flex items-center text-sm text-gray-500">
-             <Shield size={16} className="mr-2"/> Secure payments by Stripe.
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Transaction History Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="lg:col-span-3 bg-gray-800 p-6 rounded-lg shadow-lg"
-        >
-          <h2 className="text-2xl font-semibold mb-4 flex items-center"><DollarSign className="mr-2 text-yellow-400" /> Transaction History</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="py-2">Date</th>
-                  <th className="py-2">Description</th>
-                  <th className="py-2 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactionHistory.map(tx => (
-                  <tr key={tx.id} className="border-b border-gray-700 hover:bg-gray-700">
-                    <td className="py-4">{tx.date}</td>
-                    <td className="py-4">{tx.description}</td>
-                    <td className="py-4 text-right font-medium">{tx.amount}</td>
+          {/* Payment Method Section */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-800 p-6 rounded-lg shadow-lg"
+          >
+            <h2 className="text-2xl font-semibold mb-4 flex items-center"><CreditCard className="mr-2 text-blue-400" /> Payment Method</h2>
+            <div className="p-6 bg-gray-700 rounded-lg flex items-center">
+              <img src="https://img.icons8.com/color/48/000000/visa.png" alt="Visa" className="mr-4"/>
+              <div>
+                <p className="font-bold text-lg">Visa ending in 4242</p>
+                <p className="text-gray-400">Expires 12/26</p>
+              </div>
+            </div>
+            <button className="mt-4 w-full text-sm text-purple-400 hover:text-purple-300">
+              Update Payment Method
+            </button>
+            <div className="mt-6 flex items-center text-sm text-gray-500">
+                <Shield size={16} className="mr-2"/> Secure payments by Stripe.
+            </div>
+          </motion.div>
+
+          {/* Transaction History Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-3 bg-gray-800 p-6 rounded-lg shadow-lg"
+          >
+            <h2 className="text-2xl font-semibold mb-4 flex items-center"><DollarSign className="mr-2 text-yellow-400" /> Transaction History</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="py-2">Date</th>
+                    <th className="py-2">Amount</th>
+                    <th className="py-2 text-right">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
+                </thead>
+                <tbody>
+                  {history ? (
+                    history.map(tx => (
+                      <tr key={tx.id} className="border-b border-gray-700 hover:bg-gray-700">
+                        <td className="py-4">{tx.date}</td>
+                        <td className="py-4">${tx.amount.toFixed(2)}</td>
+                        <td className="py-4 text-right font-medium text-green-400">{tx.status}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <tr key={i}><td colSpan="3" className='py-4'><SkeletonLoader className='h-6 w-full' /></td></tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </div>
       </div>
-    </div>
-    </>
   );
 };
 
