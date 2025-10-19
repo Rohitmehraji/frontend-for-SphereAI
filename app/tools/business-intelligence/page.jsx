@@ -1,7 +1,26 @@
 // app/tools/business-intelligence/page.jsx
 'use client';
 import React, { useState } from 'react';
-import { BarChart, Search } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { BarChart, Search, TrendingUp, Zap } from 'lucide-react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+  },
+};
 
 export default function BusinessIntelligencePage() {
   const [query, setQuery] = useState('');
@@ -24,9 +43,13 @@ export default function BusinessIntelligencePage() {
   };
 
   return (
-    <div>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       <div className="flex items-center space-x-4 mb-6">
-        <BarChart className="w-8 h-8 text-indigo-600" />
+        <BarChart className="w-8 h-8 text-primary-600" />
         <h1 className="text-3xl font-bold text-gray-800">AI Business Intelligence Hub</h1>
       </div>
 
@@ -34,7 +57,7 @@ export default function BusinessIntelligencePage() {
         Get real-time insights into market trends, competitive analysis, and financial forecasting to make data-driven decisions.
       </p>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <motion.div className="bg-white p-6 rounded-lg shadow-lg" variants={itemVariants}>
         <h2 className="text-xl font-semibold text-gray-700 mb-4">Market Research Query</h2>
         <div className="flex space-x-4">
           <input
@@ -42,41 +65,57 @@ export default function BusinessIntelligencePage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g., 'E-commerce trends in Southeast Asia'"
-            className="flex-grow p-3 border rounded-lg"
+            className="flex-grow p-3 border rounded-lg focus:ring-2 focus:ring-primary-500"
           />
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition disabled:bg-indigo-300"
+            className="bg-primary-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-700 transition disabled:bg-primary-300"
           >
             {loading ? 'Analyzing...' : <><Search className="w-5 h-5 inline-block mr-2" />Analyze Market</>}
           </button>
         </div>
 
         {results && (
-          <div className="mt-8">
+          <motion.div
+            className="mt-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Analysis Results</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">Market Size</p>
-                <p className="text-2xl font-bold text-gray-800">{results.marketSize}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">Growth Rate</p>
-                <p className="text-2xl font-bold text-gray-800">{results.growthRate}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg col-span-2">
-                <p className="text-sm text-gray-500">Key Trends</p>
-                <ul className="list-disc list-inside mt-2">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              variants={containerVariants}
+            >
+              <motion.div className="bg-gray-50 p-4 rounded-lg flex items-center space-x-4" variants={itemVariants}>
+                <TrendingUp className="w-8 h-8 text-green-500" />
+                <div>
+                  <p className="text-sm text-gray-500">Market Size</p>
+                  <p className="text-2xl font-bold text-gray-800">{results.marketSize}</p>
+                </div>
+              </motion.div>
+              <motion.div className="bg-gray-50 p-4 rounded-lg flex items-center space-x-4" variants={itemVariants}>
+                <Zap className="w-8 h-8 text-yellow-500" />
+                <div>
+                  <p className="text-sm text-gray-500">Growth Rate</p>
+                  <p className="text-2xl font-bold text-gray-800">{results.growthRate}</p>
+                </div>
+              </motion.div>
+              <motion.div className="bg-gray-50 p-4 rounded-lg col-span-2" variants={itemVariants}>
+                <p className="text-sm text-gray-500 mb-2">Key Trends</p>
+                <ul className="space-y-2">
                   {results.keyTrends.map((trend, index) => (
-                    <li key={index} className="text-gray-700">{trend}</li>
+                    <motion.li key={index} className="flex items-center space-x-2 text-gray-700" variants={itemVariants}>
+                      <div className="w-2 h-2 rounded-full bg-primary-500" />
+                      <span>{trend}</span>
+                    </motion.li>
                   ))}
                 </ul>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
