@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import { handleCustomerSupport } from '../../../services/aiToolsService';
 
@@ -28,7 +28,6 @@ export default function CustomerSupportTool() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white flex flex-col items-center py-8 relative">
-      <Toaster />
       <div className="flex justify-between w-full max-w-2xl px-4 mt-2 mb-2">
         <div className="flex items-center gap-3 bg-white rounded-full shadow px-5 py-2">
           <img src={userAvatar} alt="User" className="w-10 h-10 rounded-full border-2 border-yellow-400" />
