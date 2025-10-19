@@ -1,68 +1,88 @@
 'use client';
-import React, { useState } from 'react';
-import toast from 'react-hot-toast';
-import ReactMarkdown from 'react-markdown';
-import { handleCustomerSupport } from '../../../services/aiToolsService';
 
-export default function CustomerSupportTool() {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const userName = 'Sphere User';
-  const userAvatar = 'https://api.dicebear.com/7.x/bottts/svg?seed=supportai';
-  const userEmail = 'sphere@yourdomain.com';
-  const isProUser = false;
+import { motion } from 'framer-motion';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { MessageSquare, Ticket, Smile, Meh, Frown } from 'lucide-react';
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    try {
-      const res = await handleCustomerSupport({ prompt: input });
-      setOutput(res.data?.result || "AI support response generated!");
-      toast.success("Response ready!");
-    } catch (err) {
-      toast.error("Please try again!");
-    } finally {
-      setLoading(false);
+// Mock Data
+const tickets = [
+  { id: '#1234', subject: 'Login Issue', user: 'john@example.com', status: 'Open' },
+  { id: '#1235', subject: 'Billing Question', user: 'jane@example.com', status: 'In Progress' },
+  { id: '#1236', subject: 'Feature Request', user: 'peter@example.com', status: 'Closed' },
+  { id: '#1237', subject: 'API Bug', user: 'mary@example.com', status: 'Open' },
+];
+
+const sentimentData = [
+  { name: 'Positive', value: 70, color: '#22c55e' },
+  { name: 'Neutral', value: 20, color: '#facc15' },
+  { name: 'Negative', value: 10, color: '#ef4444' },
+];
+
+const CustomerSupportPage = () => {
+    const getStatusClass = (status) => {
+        if (status === 'Open') return 'text-green-400';
+        if (status === 'In Progress') return 'text-yellow-400';
+        return 'text-gray-500';
     }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white flex flex-col items-center py-8 relative">
-      <div className="flex justify-between w-full max-w-2xl px-4 mt-2 mb-2">
-        <div className="flex items-center gap-3 bg-white rounded-full shadow px-5 py-2">
-          <img src={userAvatar} alt="User" className="w-10 h-10 rounded-full border-2 border-yellow-400" />
-          <div className="flex flex-col">
-            <span className="font-bold text-yellow-700">{userName}</span>
-            <span className="text-xs text-gray-500">{userEmail}</span>
+    <div className="p-8 bg-gray-900 text-white min-h-screen">
+      <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+        Customer Support Automation
+      </motion.h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* AI Chatbot */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-2 bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><MessageSquare className="mr-2"/>AI Chatbot</h2>
+          <div className="bg-gray-700 h-96 rounded-lg p-4 flex flex-col">
+              <div className="flex-grow overflow-y-auto space-y-4">
+                <div className="flex justify-start"><span className="bg-purple-600 px-4 py-2 rounded-lg">Hello! How can I help you today?</span></div>
+                <div className="flex justify-end"><span className="bg-gray-600 px-4 py-2 rounded-lg">I'm having trouble logging in.</span></div>
+              </div>
+              <div className="mt-4 flex">
+                  <input type="text" placeholder="Type your message..." className="flex-grow bg-gray-600 p-2 rounded-l-md"/>
+                  <button className="bg-purple-600 px-4 py-2 rounded-r-md">Send</button>
+              </div>
           </div>
-        </div>
-      </div>
-      <div className="w-full max-w-2xl bg-white/90 rounded-2xl p-8 shadow-xl flex flex-col items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-5xl mb-0">🧑‍💼</span>
-          <h1 className="text-3xl font-bold text-yellow-600 mb-3">Customer Support AI</h1>
-        </div>
-        <p className="text-lg mb-5 text-slate-700 text-center">Describe any customer query or use-case for instant AI support.</p>
-        <textarea className="w-full p-3 rounded-lg border text-lg resize-y mb-4"
-          rows={4}
-          placeholder="Ask your support question..."
-          value={input} onChange={e => setInput(e.target.value)} />
-        <button className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-8 py-2 rounded-lg font-bold shadow-md transition mb-6" onClick={handleGenerate} disabled={loading}>
-          {loading ? "Thinking..." : "Get Response"}
-        </button>
-        {output && (
-          <div className="w-full bg-yellow-50 rounded-xl p-5 mt-2 border border-yellow-200 animate-fade-in">
-            <h2 className="text-xl font-semibold mb-2 text-yellow-700">Result:</h2>
-            <ReactMarkdown className="prose">{output}</ReactMarkdown>
+        </motion.div>
+
+        {/* Sentiment Analysis */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">Sentiment Insights</h2>
+          <div className="h-64">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={sentimentData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {sentimentData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#1a202c' }}/>
+                </PieChart>
+              </ResponsiveContainer>
           </div>
-        )}
+          <div className="flex justify-around mt-4 text-sm">
+            <span className="flex items-center text-green-400"><Smile className="mr-1"/>Positive</span>
+            <span className="flex items-center text-yellow-400"><Meh className="mr-1"/>Neutral</span>
+            <span className="flex items-center text-red-400"><Frown className="mr-1"/>Negative</span>
+          </div>
+        </motion.div>
+
+        {/* Ticket Management */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-3 bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><Ticket className="mr-2"/>Ticket Management</h2>
+          <table className="w-full text-left">
+            <thead><tr><th>Ticket ID</th><th>Subject</th><th>User</th><th>Status</th></tr></thead>
+            <tbody>
+              {tickets.map(ticket => (
+                <tr key={ticket.id} className="border-b border-gray-700">
+                  <td className="py-2">{ticket.id}</td><td>{ticket.subject}</td><td>{ticket.user}</td><td className={getStatusClass(ticket.status)}>{ticket.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </motion.div>
       </div>
-      <iframe
-        src="https://sphereai-chatbot-widget-url.example.com"
-        title="Chatbot"
-        className="fixed bottom-6 right-6 w-80 h-96 rounded-2xl shadow-2xl border-2 border-yellow-400 z-50"
-        style={{ background: 'white' }}
-      />
     </div>
   );
-}
+};
+
+export default CustomerSupportPage;
