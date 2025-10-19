@@ -1,31 +1,25 @@
-// app/layout.jsx
-'use client';
+import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
-import { usePathname } from 'next/navigation';
-import Header from './components/common/Header';
-import Sidebar from './components/common/Sidebar';
-import PageWrapper from './components/common/PageWrapper';
+import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
+import PageWrapper from '../components/PageWrapper';
 import './globals.css';
 
-export default function RootLayout({ children }) {
-  const pathname = usePathname();
-  const isAppPage = pathname.startsWith('/tools') || pathname === '/dashboard';
+const inter = Inter({ subsets: ['latin'] });
 
+export const metadata = {
+  title: 'Sphere.AI - The Ultimate AI Platform for Founders',
+  description: 'Solve all your business-critical problems with AI-driven tools for business intelligence, finance, marketing, and more.',
+};
+
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <Toaster />
-        {isAppPage ? (
-          <>
-            <Header />
-            <Sidebar />
-            <PageWrapper>
-              {children}
-            </PageWrapper>
-          </>
-        ) : (
-          children
-        )}
+      <body className={`${inter.className} bg-gray-900`}>
+        <Toaster position="top-center" reverseOrder={false} />
+        <PageWrapper>
+            {children}
+        </PageWrapper>
       </body>
     </html>
   );

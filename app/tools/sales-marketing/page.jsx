@@ -1,96 +1,94 @@
-// app/tools/sales-marketing/page.jsx
 'use client';
-import React, { useState } from 'react';
+
 import { motion } from 'framer-motion';
-import { Mic, Mail, BarChart2 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, Mail, Megaphone, Search } from 'lucide-react';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
+// Mock Data
+const leads = [
+  { name: 'John Doe', company: 'Innovate Inc.', score: 92, status: 'Hot' },
+  { name: 'Jane Smith', company: 'Tech Solutions', score: 85, status: 'Hot' },
+  { name: 'Peter Jones', company: 'Quantum Dynamics', score: 71, status: 'Warm' },
+  { name: 'Mary Johnson', company: 'NextGen AI', score: 63, status: 'Cold' },
+];
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-  },
-};
+const emailCampaignData = [
+  { day: 'Mon', openRate: 22, clickRate: 4 },
+  { day: 'Tue', openRate: 25, clickRate: 5 },
+  { day: 'Wed', openRate: 31, clickRate: 7 },
+  { day: 'Thu', openRate: 28, clickRate: 6 },
+  { day: 'Fri', openRate: 35, clickRate: 9 },
+];
 
-export default function SalesMarketingPage() {
-  const [contentType, setContentType] = useState('email');
-  const [generatedContent, setGeneratedContent] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleGenerate = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      if (contentType === 'email') {
-        setGeneratedContent('Subject: Following Up!\\n\\nHi [Lead Name],\\n\\nJust wanted to follow up on our recent conversation...');
-      } else if (contentType === 'social') {
-        setGeneratedContent('Excited to announce our new feature! 🚀 #AI #Startup #Innovation');
-      } else {
-        setGeneratedContent('<h1>The Future of AI in Business</h1><p>Here is an in-depth article about the impact of AI...</p>');
-      }
-      setLoading(false);
-    }, 1500);
-  };
-
+const SalesMarketingPage = () => {
+    const getStatusClass = (status) => {
+        if (status === 'Hot') return 'text-red-400';
+        if (status === 'Warm') return 'text-yellow-400';
+        return 'text-blue-400';
+    }
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <div className="flex items-center space-x-4 mb-6">
-        <Mic className="w-8 h-8 text-primary-600" />
-        <h1 className="text-3xl font-bold text-gray-800">Sales & Marketing Automation</h1>
-      </div>
+    <div className="p-8 bg-gray-900 text-white min-h-screen">
+      <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+        Sales & Marketing Automation
+      </motion.h1>
 
-      <p className="text-lg text-gray-600 mb-8">
-        Generate personalized email campaigns, social media content, and SEO-optimized articles with our powerful AI content generator.
-      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* AI Lead Scoring */}
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><Users className="mr-2"/>AI Lead Scoring</h2>
+          <table className="w-full text-left">
+            <thead><tr><th>Name</th><th>Company</th><th>Score</th><th>Status</th></tr></thead>
+            <tbody>
+              {leads.map(lead => (
+                <tr key={lead.name} className="border-b border-gray-700">
+                  <td className="py-2">{lead.name}</td>
+                  <td>{lead.company}</td>
+                  <td>{lead.score}</td>
+                  <td className={getStatusClass(lead.status)}>{lead.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </motion.div>
 
-      <motion.div className="bg-white p-6 rounded-lg shadow-lg" variants={itemVariants}>
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">AI Content Generation</h2>
-        <div className="flex items-center space-x-4 mb-4">
-          <select
-            value={contentType}
-            onChange={(e) => setContentType(e.target.value)}
-            className="p-3 border rounded-lg focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="email">Personalized Email</option>
-            <option value="social">Social Media Post</option>
-            <option value="seo">SEO Article</option>
-          </select>
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="bg-primary-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-700 transition disabled:bg-primary-300"
-          >
-            {loading ? 'Generating...' : <><Mail className="w-5 h-5 inline-block mr-2" />Generate Content</>}
-          </button>
-        </div>
+        {/* Email Campaign Performance */}
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-gray-800 p-6 rounded-lg h-96">
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><Mail className="mr-2"/>Email Campaign Performance</h2>
+          <ResponsiveContainer>
+            <LineChart data={emailCampaignData}>
+              <XAxis dataKey="day" stroke="#a0aec0" />
+              <YAxis stroke="#a0aec0" />
+              <Tooltip contentStyle={{ backgroundColor: '#1a202c' }}/>
+              <Legend />
+              <Line type="monotone" dataKey="openRate" name="Open Rate (%)" stroke="#8884d8" />
+              <Line type="monotone" dataKey="clickRate" name="Click Rate (%)" stroke="#82ca9d" />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
 
-        {generatedContent && (
-          <motion.div
-            className="mt-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Generated Content</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <pre className="whitespace-pre-wrap text-gray-800">{generatedContent}</pre>
+        {/* AI Content Generation */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><Megaphone className="mr-2"/>AI Content Generator</h2>
+          <textarea placeholder="e.g., A tweet about our new feature..." className="w-full bg-gray-700 p-2 rounded-md"></textarea>
+          <button className="mt-2 px-4 py-2 bg-purple-600 rounded-md">Generate</button>
+        </motion.div>
+
+        {/* SEO Assistant */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><Search className="mr-2"/>SEO Assistant</h2>
+          <input type="text" placeholder="Enter a keyword..." className="w-full bg-gray-700 p-2 rounded-md"/>
+          <div className="mt-4">
+            <h3 className="font-semibold">Suggestions:</h3>
+            <div className="flex flex-wrap gap-2 mt-2">
+                <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">AI business tools</span>
+                <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">financial forecasting</span>
+                <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">automated marketing</span>
             </div>
-          </motion.div>
-        )}
-      </motion.div>
-    </motion.div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
-}
+};
+
+export default SalesMarketingPage;
