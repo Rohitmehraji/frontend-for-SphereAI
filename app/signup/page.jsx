@@ -77,7 +77,7 @@ const SignupPage = () => {
               type="password"
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.gittarget.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full pl-10 pr-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
