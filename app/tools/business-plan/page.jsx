@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 // Swap this import for the correct tool API:
 import { generateBusinessPlan } from '../../../services/aiToolsService';
@@ -31,8 +31,6 @@ export default function BusinessPlanTool() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center py-8 relative">
-      <Toaster />
-
       {/* Profile/Avatar Card with PRO badge */}
       <div className="flex justify-between w-full max-w-2xl px-4 mt-2 mb-2">
         <div className="flex items-center gap-3 bg-white rounded-full shadow px-5 py-2">
