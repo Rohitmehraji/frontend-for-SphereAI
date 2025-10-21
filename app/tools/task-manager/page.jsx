@@ -17,7 +17,7 @@ export default function TaskManagerTool() {
     setLoading(true);
     try {
       const res = await manageTasks({ prompt: input });
-      setOutput(res.data?.result || "Your tasks are organized!");
+      setOutput(res.result || "Your tasks are organized!");
       toast.success("Task list ready!");
     } catch (err) {
       toast.error("Failed to organize tasks!");

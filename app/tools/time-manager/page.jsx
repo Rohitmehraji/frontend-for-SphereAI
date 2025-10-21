@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
-import { manageTime } from '../../../services/aiToolsService';
+import { optimizeCalendar } from '../../../services/aiToolsService';
 
 export default function TimeManagerTool() {
   const [input, setInput] = useState('');
@@ -16,8 +16,8 @@ export default function TimeManagerTool() {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const res = await manageTime({ prompt: input });
-      setOutput(res.data?.result || "Here's your optimized schedule!");
+      const res = await optimizeCalendar({ prompt: input });
+      setOutput(res.result || "Here's your optimized schedule!");
       toast.success("Time managed!");
     } catch (err) {
       toast.error("Schedule failed!");

@@ -17,7 +17,7 @@ export default function ContentGeneratorTool() {
     setLoading(true);
     try {
       const res = await generateContent({ prompt: input });
-      setOutput(res.data?.result || "Here’s some fresh AI content!");
+      setOutput(res.result || "Here’s some fresh AI content!");
       toast.success("Content generated!");
     } catch (err) {
       toast.error("Something went wrong.");

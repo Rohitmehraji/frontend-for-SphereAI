@@ -17,7 +17,7 @@ export default function PitchDeckTool() {
     setLoading(true);
     try {
       const res = await buildPitchDeck({ prompt: input });
-      setOutput(res.data?.result || "Your AI pitch deck is ready!");
+      setOutput(res.result || "Your AI pitch deck is ready!");
       toast.success("Deck built!");
     } catch (err) {
       toast.error("Failed! Try again.");
