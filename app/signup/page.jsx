@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { registerUser } from '../../lib/api';
-
+import { registerUser, loginUser } from '../../lib/api';
 
 const SignupPage = () => {
   const router = useRouter();
@@ -15,19 +14,37 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    // Redirect if already logged in
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!fullName || !email || !password) {
+      toast.error('Please fill in all fields.');
+      return;
+    }
     setIsLoading(true);
-    toast.loading('Creating your account...');
+    const toastId = toast.loading('Creating your account...');
 
     try {
       await registerUser(fullName, email, password);
-      toast.dismiss();
-      toast.success('Account created successfully!');
+      toast.dismiss(toastId);
+      toast.success('Account created successfully! Logging you in...');
+
+      // Automatically log in the user after registration
+      const loginResponse = await loginUser(email, password);
+      toast.success(loginResponse.message || 'Successfully logged in!');
       router.push('/dashboard');
+
     } catch (error) {
-      toast.dismiss();
-      toast.error(error.message || 'An error occurred.');
+      toast.dismiss(toastId);
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +94,7 @@ const SignupPage = () => {
               type="password"
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.gittarget.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full pl-10 pr-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             />

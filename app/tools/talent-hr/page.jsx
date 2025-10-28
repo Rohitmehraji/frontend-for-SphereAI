@@ -1,75 +1,89 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Users, FileText, UserCheck } from 'lucide-react';
-
-// Mock Data
-const employeeData = [
-  { subject: 'Communication', A: 85, fullMark: 100 },
-  { subject: 'Teamwork', A: 90, fullMark: 100 },
-  { subject: 'Leadership', A: 75, fullMark: 100 },
-  { subject: 'Problem Solving', A: 95, fullMark: 100 },
-  { subject: 'Productivity', A: 80, fullMark: 100 },
-];
-
-const onboardingTasks = [
-    { text: "Sign HR Documents", completed: true },
-    { text: "Set up Developer Environment", completed: true },
-    { text: "Complete Security Training", completed: false },
-    { text: "Meet with Mentor", completed: false },
-];
+import { FileText, Zap, Loader, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { generateContent } from '../../lib/additionalToolsService';
 
 const TalentHRPage = () => {
-  return (
-    <div className="p-8 bg-gray-900 text-white min-h-screen">
-      <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-        Talent & HR Optimization
-      </motion.h1>
+    const [jobDescription, setJobDescription] = useState('');
+    const [resume, setResume] = useState('');
+    const [output, setOutput] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recruitment AI */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4 flex items-center"><FileText className="mr-2"/>Recruitment AI</h2>
-          <div className="border-2 border-dashed border-gray-600 p-10 text-center rounded-lg">
-            <p className="text-gray-400">Drag & Drop Resumes Here</p>
-            <button className="mt-4 px-4 py-2 bg-purple-600 rounded-md">Or Upload Files</button>
-          </div>
-          <div className="mt-4">
-              <h3 className="font-semibold">Analysis Results:</h3>
-              <p className="text-sm text-gray-400 mt-2">No files analyzed yet.</p>
-          </div>
-        </motion.div>
+    const handleGenerate = async () => {
+        setLoading(true);
+        setError(null);
+        const toastId = toast.loading('Analyzing Candidate Fit...');
 
-        {/* Employee Analytics */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-gray-800 p-6 rounded-lg h-96">
-          <h2 className="text-xl font-semibold mb-4 flex items-center"><Users className="mr-2"/>Employee Analytics</h2>
-          <ResponsiveContainer>
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={employeeData}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="subject" />
-              <PolarRadiusAxis />
-              <Radar name="Performance" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </motion.div>
+        try {
+            const prompt = `Job Description: ${jobDescription}\n\nResume: ${resume}\n\nIs this candidate a good fit for the role?`;
+            const result = await generateContent({ prompt });
+            setOutput(result);
+            toast.success('Analysis complete!');
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || 'Failed to analyze candidate.';
+            setError(errorMessage);
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+            toast.dismiss(toastId);
+        }
+    };
 
-        {/* Onboarding Automation */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4 flex items-center"><UserCheck className="mr-2"/>Onboarding Automation</h2>
-          <p className="text-sm mb-4">Onboarding progress for <span className="font-bold">New Developer Hire</span>:</p>
-            <div className="space-y-3">
-                {onboardingTasks.map((task, i) => (
-                    <div key={i} className={`bg-gray-700 p-3 rounded-md flex items-center ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                        <input type="checkbox" checked={task.completed} readOnly className="form-checkbox h-5 w-5 bg-gray-600 text-purple-500 rounded focus:ring-0 mr-3"/>
-                        <p>{task.text}</p>
+    return (
+        <div className="p-8 bg-gray-900 text-white min-h-screen">
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                Talent & HR Optimization
+            </motion.h1>
+
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-gray-800 p-6 rounded-lg">
+                <h2 className="text-2xl font-semibold mb-4 flex items-center"><FileText className="mr-2 text-blue-400" /> AI Recruitment Assistant</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 className="text-lg font-semibold mb-2">Job Description</h3>
+                        <textarea
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                            className="w-full p-4 bg-gray-700 rounded-md text-white"
+                            rows="10"
+                            placeholder="Paste the job description here..."
+                        ></textarea>
                     </div>
-                ))}
-            </div>
-        </motion.div>
-      </div>
-    </div>
-  );
+                    <div>
+                        <h3 className="text-lg font-semibold mb-2">Candidate Resume</h3>
+                        <textarea
+                            value={resume}
+                            onChange={(e) => setResume(e.target.value)}
+                            className="w-full p-4 bg-gray-700 rounded-md text-white"
+                            rows="10"
+                            placeholder="Paste the candidate's resume here..."
+                        ></textarea>
+                    </div>
+                </div>
+                <motion.button
+                    onClick={handleGenerate}
+                    disabled={loading}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="mt-4 px-6 py-2 bg-purple-600 rounded-md flex items-center disabled:opacity-50"
+                >
+                    {loading ? <><Loader className="animate-spin mr-2" /> Analyzing...</> : <><Zap className="inline-block mr-2" /> Analyze Fit</>}
+                </motion.button>
+
+                {error && <div className='text-red-400 mt-4 flex items-center'><AlertCircle className='mr-2'/>{error}</div>}
+
+                {output && (
+                    <div className="mt-6">
+                        <h3 className="text-xl font-semibold">Analysis Results:</h3>
+                        <pre className="mt-2 p-4 bg-gray-700 rounded-md whitespace-pre-wrap">{JSON.stringify(output, null, 2)}</pre>
+                    </div>
+                )}
+            </motion.div>
+        </div>
+    );
 };
 
 export default TalentHRPage;

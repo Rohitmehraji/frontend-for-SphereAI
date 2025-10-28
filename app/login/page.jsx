@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock, CheckCircle } from 'lucide-react';
+import { LogIn, Mail, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { loginUser } from '../../lib/api';
-
 
 const LoginPage = () => {
   const router = useRouter();
@@ -14,19 +13,32 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    // Redirect if already logged in
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast.error('Please enter both email and password.');
+      return;
+    }
     setIsLoading(true);
-    toast.loading('Signing in...');
+    const toastId = toast.loading('Signing in...');
 
     try {
-      await loginUser(email, password);
-      toast.dismiss();
-      toast.success('Successfully logged in!');
+      const response = await loginUser(email, password);
+      toast.dismiss(toastId);
+      toast.success(response.message || 'Successfully logged in!');
       router.push('/dashboard');
     } catch (error) {
-      toast.dismiss();
-      toast.error(error.message || 'An error occurred.');
+      toast.dismiss(toastId);
+      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -1,47 +1,51 @@
-# Sphere.AI - Frontend
+# Sphere.AI Frontend
 
-This is the complete frontend for Sphere.AI, a powerful platform designed to help founders and entrepreneurs solve business-critical problems using AI-driven tools. This project was built with Next.js and styled with Tailwind CSS.
+This is the official frontend for Sphere.AI, a powerful platform of AI-driven tools designed to help founders and entrepreneurs solve critical business problems. This application is built with Next.js and Tailwind CSS, and it is fully integrated with the [Sphere.AI Backend](https://github.com/Rohitmehraji/backend-for-shereai).
 
 ## Features
 
-- **Modern UI/UX:** A clean, professional, and intuitive dark-themed interface with smooth animations powered by `framer-motion`.
-- **Authentication:** Secure login and registration pages with mock API services.
-- **Dashboard:** A central hub for analytics, KPI tracking, and user engagement charts.
-- **Core Feature Modules:**
-    - AI Business Intelligence Hub
-    - Automated Financial Suite
-    - Sales & Marketing Automation
-    - Customer Support Automation
-    - Productivity & Workflow Orchestration
-    - Talent & HR Optimization
-- **Billing & Subscriptions:** A dedicated page for managing subscriptions and viewing transaction history.
-- **Responsive Design:** Fully responsive layout for both desktop and mobile devices.
+- **Founder-Friendly Dashboard:** A visually rich dashboard with dynamic metrics, charts, and an activity feed.
+- **Live Backend Integration:** Every feature, from authentication to the AI tools, is connected to the live production backend.
+- **Secure Authentication:** A complete login/signup flow with secure token handling.
+- **Billing & Subscription Management:** A fully functional billing page with live Stripe integration.
+- **Suite of AI Tools:** A comprehensive set of AI-powered tools for business planning, marketing, finance, and more.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v16 or later)
+- Node.js (v18 or later)
 - npm or yarn
+- A running instance of the [Sphere.AI Backend](https://github.com/Rohitmehraji/backend-for-shereai).
 
 ### Installation
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/your-username/frontend-for-sphere-ai.git
+    cd frontend-for-sphere-ai
     ```
-2.  **Navigate to the project directory:**
-    ```bash
-    cd sphere-ai-frontend
-    ```
-3.  **Install dependencies:**
+
+2.  **Install dependencies:**
     ```bash
     npm install
     ```
 
+### Environment Variables
+
+To run this project, you need to create a `.env.local` file in the root of your project and add the following environment variables:
+
+```
+NEXT_PUBLIC_API_URL=https://backend-for-shereai.onrender.com
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51SJ7eUIWpKXzj9UsLZfnHeWWmNKCkZNT9LR3WjA4wId3EjYNl9ZrhW8lH92HKRtXLu2WAuYAfzzaL5rK8iERGH4h00aQMYqkiV
+```
+
+-   `NEXT_PUBLIC_API_URL`: The URL of your deployed Sphere.AI backend.
+-   `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Your publishable key from Stripe for processing payments.
+
 ### Running the Development Server
 
-To run the application in development mode, use the following command:
+To start the development server, run:
 
 ```bash
 npm run dev
@@ -49,41 +53,24 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Connecting to a Backend
+## Deployment on Vercel
 
-This frontend is designed to be backend-agnostic. All API calls are simulated in mock services, which can be easily replaced with real API endpoints.
+This application is optimized for deployment on [Vercel](https://vercel.com/), the platform from the creators of Next.js.
 
-### API Services Location
+### Step-by-Step Guide
 
-The mock API services are located in `lib/api.js`. This file contains functions for user authentication (`loginUser`, `registerUser`).
+1.  **Push your code to a Git repository** (e.g., GitHub, GitLab, Bitbucket).
 
-### How to Wire Up Your Backend
+2.  **Import your project into Vercel.**
+    - Go to your Vercel dashboard and click "Add New... > Project".
+    - Select your Git repository.
 
-1.  **Open `lib/api.js`:** This is where you'll find the mock API calls.
-2.  **Replace Mock Logic with Real API Calls:**
-    - Use a library like `axios` or the native `fetch` API to make requests to your backend.
-    - Update the functions to handle real request/response cycles, including loading states and error handling.
-    - Ensure your backend returns data in the format expected by the frontend components.
+3.  **Configure your project.**
+    - Vercel will automatically detect that you are using Next.js and will configure the build settings for you.
 
-**Example (replacing the mock `loginUser` function):**
+4.  **Add your environment variables.**
+    - In your Vercel project settings, navigate to the "Environment Variables" section.
+    - Add the `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` with their respective values.
 
-```javascript
-// lib/api.js
-
-import axios from 'axios';
-
-const API_URL = 'https://your-backend-api.com/api';
-
-export const loginUser = async (email, password) => {
-  try {
-    const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-    // Assuming your backend returns a token and user data
-    // You can store the token in localStorage or cookies
-    localStorage.setItem('token', response.data.token);
-    return { success: true, user: response.data.user };
-  } catch (error) {
-    // Throw an error with a message from the backend, or a default one
-    throw new Error(error.response?.data?.message || 'Login failed. Please try again.');
-  }
-};
-```
+5.  **Deploy.**
+    - Click the "Deploy" button. Vercel will build and deploy your application. After a few moments, you will have a live, production-ready URL for your Sphere.AI frontend.
